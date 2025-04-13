@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donor Matcher</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    <!-- Your Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        #map { height: 400px; width: 100%; margin-bottom: 20px; border: 1px solid #ccc; }
+        /* static/style.css - Enhanced Version */
+
+/* --- Variables (Optional, but good practice) --- */
+:root {
+    --primary-color: #007bff;  /* Blue */
+    --primary-color-dark: #0056b3;
+    --secondary-color: #6c757d; /* Grey */
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --white-color: #fff;
+    --border-color: #dee2e6;
+    --base-font-size: 16px;
+    --border-radius: 0.3rem;
+    --box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* --- Base & Typography --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    background-color: var(--light-color);
+    color: var(--dark-color);
+    font-size: var(--base-font-size);
+}
+
+.container {
+    max-width: 1140px; /* Slightly wider */
+    margin: 30px auto;
+    background-color: var(--white-color);
+    padding: 2rem; /* Use rem units */
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+}
+
+h1, h2, h3 {
+    color: var(--dark-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-weight: 500; /* Slightly less heavy */
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+h2 {
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    margin-top: 2rem; /* Add space above H2 */
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-top: 1.5rem;
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+/* --- Form Styling --- */
+#match-form {
+    margin-bottom: 2rem;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjust min width */
+    gap: 1.5rem; /* Increase gap */
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600; /* Bolder labels */
+    color: #495057;
+}
+
+.form-group input[type="number"],
+.form-group input[type="text"],
+.form-group select {
+    width: 100%;
+    padding: 0.75rem 1rem; /* More padding */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    font-size: 1rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #80bdff;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+button[type="submit"] {
+    display: inline-block; /* Allow centering if needed */
+    width: 100%;
+    padding: 0.8rem 1.5rem;
+    background-color: var(--primary-color);
+    color: var(--white-color);
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    transition: background-color 0.2s ease;
+}
+
+button[type="submit"]:hover {
+    background-color: var(--primary-color-dark);
+}
+
+/* --- Results Section --- */
+.results-section {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+#status-message {
+    font-style: italic;
+    color: var(--secondary-color);
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.error-text {
+    color: var(--danger-color);
+    font-weight: bold;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* Map Container Styling */
+#map {
+    height: 450px; /* Slightly taller map */
+    width: 100%;
+    margin-bottom: 2rem;
+    border-radius: var(--border-radius); /* Rounded corners */
+    border: 1px solid var(--border-color);
+    box-shadow: var(--box-shadow);
+}
+
+/* Table Styling */
+.table-container {
+    overflow-x: auto;
+}
+
+#results-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    box-shadow: var(--box-shadow);
+    border-radius: var(--border-radius); /* Apply to table */
+    overflow: hidden; /* Ensures border-radius clips content */
+}
+
+#results-table th,
+#results-table td {
+    border: none; /* Remove internal borders */
+    border-bottom: 1px solid var(--border-color); /* Row separators */
+    padding: 0.9rem 1rem; /* More padding */
+    text-align: left;
+    vertical-align: middle;
+}
+
+#results-table thead th {
+    background-color: var(--light-color);
+    font-weight: 600; /* Bolder headers */
+    color: var(--secondary-color);
+    border-bottom-width: 2px; /* Thicker bottom border for header */
+    text-transform: uppercase;
+    font-size: 0.9em;
+    letter-spacing: 0.05em;
+}
+
+#results-table tbody tr:last-child td {
+    border-bottom: none; /* No border on last row */
+}
+
+#results-table tbody tr:hover {
+    background-color: #f1f1f1; /* Hover effect */
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Find Blood Donors</h1>
+        <p>Select the bank's district and blood requirement to find matches.</p>
+
+        <form id="match-form">
+            <div class="form-grid">
+                <!-- District Dropdown -->
+                <div class="form-group">
+                    <label for="district">Bank's District:</label>
+                    <select id="district" name="district" required>
+                        <option value="" disabled selected>-- Select District --</option>
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+
+                <!-- Blood Type Dropdown -->
+                <div class="form-group">
+                    <label for="blood_type">Required Blood Type:</label>
+                    <select id="blood_type" name="blood_type" required>
+                        <option value="" disabled selected>-- Select Blood Type --</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="ALL">ALL (Any Type)</option>
+                    </select>
+                </div>
+
+                <!-- Units Input (Remains the same) -->
+                <div class="form-group">
+                    <label for="units">Required Units:</label>
+                    <input type="number" id="units" name="units" required placeholder="e.g., 5" min="1">
+                </div>
+            </div>
+            <button type="submit">Find Matches</button>
+        </form>
+
+        <div class="results-section">
+            <h2>Results</h2>
+             <p id="status-message">Select options and submit the form to see results.</p>
+             <p id="error-message" class="error-text"></p>
+
+            <!-- Map Container -->
+            <div id="map"></div>
+
+            <h3>Matching Donors List:</h3>
+            <div class="table-container">
+                <table id="results-table" style="display:none;">
+                    <thead>
+                        <tr>
+                            <!-- Inside <table id="results-table"> -->
+                                    <th>Donor ID</th>
+                                    <th>Blood Type</th>
+                                    <th>Distance (km)</th>
+                                    <th>Latitude</th>
+                                    <th>Longitude</th>
+                                    <th>Cluster</th> <!-- ADD BACK -->
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Results will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div><!-- /container -->
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    <!-- Your Custom JavaScript -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
